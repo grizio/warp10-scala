@@ -1,5 +1,6 @@
 package kneelnrise.warp10scala.services
 
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpHeader.ParsingResult
 import akka.http.scaladsl.model.{HttpHeader, HttpRequest, HttpResponse}
@@ -10,6 +11,7 @@ import kneelnrise.warp10scala.constants.CharsetConstants
 import kneelnrise.warp10scala.model.Warp10Configuration
 import kneelnrise.warp10scala.services.Warp10CommonClient.PoolClientFlow
 
+import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
@@ -22,6 +24,30 @@ object Warp10CommonClient {
       .runFold(ByteString.empty) { case (acc, dataBytes) => acc ++ dataBytes }
       .map(_.decodeString(CharsetConstants.`UTF-8`))
   }
+
+  def lineByLine: Flow[ByteString, String, NotUsed] =
+    Flow[ByteString]
+      .map(_.decodeString(CharsetConstants.`UTF-8`))
+      // Force a last EOL when there is no EOL when EOF
+      // TODO: How to delete the last EOL when already defined?
+      .intersperse("", "", "\n")
+      .scan("") { case (acc, current) =>
+        if (acc.endsWith("\n")) {
+          current
+        } else if (acc.contains("\n")) {
+          acc.substring(acc.lastIndexOf("\n") + 1) + current
+        } else {
+          acc + current
+        }
+      }
+      .filter(_.contains("\n"))
+      .map(segment => segment.substring(0, segment.lastIndexOf("\n")))
+      .mapConcat(_.split("\n").to[immutable.Iterable])
+      .map(line => if (line.startsWith("\r")) line.drop(1) else line)
+      .map(line => if (line.endsWith("\r")) line.dropRight(1) else line)
+
+  def lineByLineNoEmpty: Flow[ByteString, String, NotUsed] =
+    lineByLine.filter(_.trim.nonEmpty)
 }
 
 private[services] case class Warp10ClientContext(configuration: Warp10Configuration, poolClientFlow: Warp10CommonClient.PoolClientFlow, actorMaterializer: ActorMaterializer) {
