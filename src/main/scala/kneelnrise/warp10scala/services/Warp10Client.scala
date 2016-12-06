@@ -5,10 +5,12 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
-import kneelnrise.warp10scala.model.{GTS, Warp10Configuration}
+import kneelnrise.warp10scala.model.{FetchQuery, GTS, Warp10Configuration}
 
 class Warp10Client private(warp10ClientContext: Warp10ClientContext) {
   def push: Flow[GTS, Unit, NotUsed] = Warp10PushClient.push(warp10ClientContext)
+
+  def fetch: Flow[FetchQuery, GTS, NotUsed] = Warp10FetchClient.fetch(warp10ClientContext)
 }
 
 object Warp10Client {
