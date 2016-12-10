@@ -11,6 +11,8 @@ case class Warp10Configuration(
   def pushUrl: String = s"$baseUrlWithVersion/update"
 
   def fetchUrl: String = s"$baseUrlWithVersion/fetch"
+
+  def execUrl: String = s"$baseUrlWithVersion/exec"
 }
 
 object Warp10Configuration {

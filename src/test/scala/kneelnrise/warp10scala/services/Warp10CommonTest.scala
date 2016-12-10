@@ -28,4 +28,9 @@ object Warp10CommonTest {
     def toFutureSeq(implicit materializer: Materializer): Future[Seq[GTS]] =
       source.runFold(Seq[GTS]()) { case (acc, current) => acc :+ current }
   }
+
+  implicit class StringFold(source: Source[String, _]) {
+    def toFutureString(implicit materializer: Materializer): Future[String] =
+      source.runFold("") { case (acc, current) => acc + current }
+  }
 }
