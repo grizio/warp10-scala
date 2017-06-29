@@ -21,6 +21,10 @@ object Warp10Client {
     Warp10Client(Http().cachedHostConnectionPool[String](host))
   }
 
+  def apply(host: String, port: Int)(implicit warp10configuration: Warp10Configuration, actorSystem: ActorSystem, actorMaterializer: ActorMaterializer): Warp10Client = {
+    Warp10Client(Http().cachedHostConnectionPool[String](host, port))
+  }
+
   def apply(poolClientFlow: PoolClientFlow)(implicit warp10configuration: Warp10Configuration, actorSystem: ActorSystem, actorMaterializer: ActorMaterializer): Warp10Client = {
     new Warp10Client(Warp10ClientContext(warp10configuration, poolClientFlow, actorMaterializer))
   }
